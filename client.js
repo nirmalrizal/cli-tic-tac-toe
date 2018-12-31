@@ -28,7 +28,14 @@ function chooseTheMove() {
 }
 
 function handleTheMove(data) {
-  client.write(data);
+  const gameIndex = Number(data);
+  const isInValidIndex = gameIndex < 1 || gameIndex > 9;
+  if (Number.isNaN(gameIndex) || isInValidIndex) {
+    console.log("Invalid move !!");
+    chooseTheMove();
+  } else {
+    client.write(data);
+  }
 }
 
 client.on("data", function(data) {

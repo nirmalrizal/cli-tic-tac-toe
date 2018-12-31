@@ -1,9 +1,22 @@
 var net = require("net");
 
+const blank = "\n".repeat(process.stdout.rows);
+const movesArr = {
+  "1": "1",
+  "2": "2",
+  "3": "3",
+  "4": "4",
+  "5": "5",
+  "6": "6",
+  "7": "7",
+  "8": "8",
+  "9": "9"
+};
+
 const connectedSockets = new Set();
 const clients = [];
 
-connectedSockets.broadcast = function(data, client) {
+const broadcastData = function(data, client) {
   for (let sock of this) {
     if (sock === client) {
       sock.write(data);
@@ -12,12 +25,13 @@ connectedSockets.broadcast = function(data, client) {
 };
 
 var server = net.createServer(function(socket) {
-  const clientsSize = connectedSockets.size;
-  if (Number(clientsSize) === 2) {
+  const clientsSize = clients.length;
+  console.log(clientsSize);
+  if (clientsSize === 2) {
     socket.end("Maximum connections");
   } else {
     console.log("new client connected");
-    connectedSockets.add(socket);
+    // connectedSockets.add(socket);
     clients.push({
       name: null,
       socket,
@@ -26,7 +40,17 @@ var server = net.createServer(function(socket) {
     });
 
     socket.on("end", function() {
-      connectedSockets.delete(socket);
+      console.log("Connection ended");
+      const player = getClientIndex(clients, socket);
+      // connectedSockets.delete(socket);
+      clients.splice(player - 1, 1);
+    });
+
+    socket.on("error", function(error) {
+      console.log("Connection error");
+      const player = getClientIndex(clients, socket);
+      // connectedSockets.delete(socket);
+      clients.splice(player - 1, 1);
     });
 
     socket.on("data", function(data) {
@@ -34,7 +58,7 @@ var server = net.createServer(function(socket) {
       console.log(strData);
       const player = getClientIndex(clients, socket);
       console.log(`Player ${player}`);
-      connectedSockets.broadcast(strData, socket);
+      broadcastData(strData, socket);
     });
   }
 });
