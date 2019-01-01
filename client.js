@@ -1,10 +1,12 @@
-var net = require("net");
+const net = require("net");
 const readline = require("readline");
+const ora = require("ora");
 
 /* Constants */
 const NAME_CHANGE = "NAME_CHANGE";
 const START_GAME = "START_GAME";
 const GAME_MESSAGE = "GAME_MESSAGE";
+const SHOW_GAME_BOARD = "SHOW_GAME_BOARD";
 
 const readMove = readline.createInterface({
   input: process.stdin,
@@ -74,6 +76,20 @@ function handleNameChange(playerName) {
   console.log(`\nYour game name : ${name}`);
 }
 
+let cliSpinner;
+function showMessageWithSpinner(message) {
+  cliSpinner = ora({
+    text: message,
+    spinner: "dots"
+  }).start();
+}
+
+function stopTheSpinner() {
+  if (cliSpinner) {
+    cliSpinner.stop();
+  }
+}
+
 client.on("data", function(data) {
   const parsedData = JSON.parse(data.toString());
   const { type, payload } = parsedData;
@@ -83,13 +99,32 @@ client.on("data", function(data) {
     chooseTheMove();
   }
   if (type === GAME_MESSAGE) {
-    console.log(`\n${payload.message}`);
+    if (payload.spinner === true) {
+      showMessageWithSpinner(payload.message);
+    } else {
+      console.log(`\n${payload.message}`);
+    }
+  }
+  if (type === SHOW_GAME_BOARD) {
+    showGameBoard(payload.board);
   }
   if (type === "move") {
     console.log(payload.move);
     chooseTheMove();
   }
 });
+
+function showGameBoard(gameBoard) {
+  stopTheSpinner();
+  clearTheScreen();
+  console.log(gameBoard);
+}
+
+function clearTheScreen() {
+  console.log(blank);
+  readline.cursorTo(process.stdout, 0, 0);
+  readline.clearScreenDown(process.stdout);
+}
 
 client.on("close", function() {
   console.log("Connection closed");

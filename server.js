@@ -1,9 +1,11 @@
-var net = require("net");
+const net = require("net");
+const printResult = require("./printResult");
 
 /* Constants */
 const NAME_CHANGE = "NAME_CHANGE";
 const START_GAME = "START_GAME";
 const GAME_MESSAGE = "GAME_MESSAGE";
+const SHOW_GAME_BOARD = "SHOW_GAME_BOARD";
 
 const blank = "\n".repeat(process.stdout.rows);
 const movesArr = {
@@ -98,7 +100,8 @@ function checkUserStatusAndStartGame() {
     broadcastData(
       JSON.stringify({
         payload: {
-          message: "Waiting for Player 2 to connect..."
+          message: "Waiting for Player 2 to connect",
+          spinner: true
         },
         type: GAME_MESSAGE
       }),
@@ -112,13 +115,14 @@ function checkUserStatusAndStartGame() {
     }
     if (checkNameChange.length === 1) {
       let eligPlayer = clients[0].socket;
-      if (checkNameChange.pos === 1) {
+      if (checkNameChange[0].pos === 1) {
         eligPlayer = clients[1].socket;
       }
       broadcastData(
         JSON.stringify({
           payload: {
-            message: `Waiting for Player ${checkNameChange.pos} for name change`
+            message: `Waiting Player ${checkNameChange[0].pos} for name change`,
+            spinner: true
           },
           type: GAME_MESSAGE
         }),
@@ -130,6 +134,21 @@ function checkUserStatusAndStartGame() {
 
 function startMainGame() {
   console.log("Start the main game man");
+  showGameBoardToPlayers();
+}
+
+function showGameBoardToPlayers() {
+  clients.forEach(client => {
+    broadcastData(
+      JSON.stringify({
+        payload: {
+          board: printResult(movesArr)
+        },
+        type: SHOW_GAME_BOARD
+      }),
+      client.socket
+    );
+  });
 }
 
 function getClientIndex(clients, sock) {
