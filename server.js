@@ -6,8 +6,8 @@ const NAME_CHANGE = "NAME_CHANGE";
 const START_GAME = "START_GAME";
 const GAME_MESSAGE = "GAME_MESSAGE";
 const SHOW_GAME_BOARD = "SHOW_GAME_BOARD";
+const GAME_MOVE = "GAME_MOVE";
 
-const blank = "\n".repeat(process.stdout.rows);
 const movesArr = {
   "1": "1",
   "2": "2",
@@ -20,8 +20,8 @@ const movesArr = {
   "9": "9"
 };
 
-const connectedSockets = new Set();
 const clients = [];
+let playerMovesArr = [];
 
 const broadcastData = function(data, client) {
   client.write(data);
@@ -68,20 +68,11 @@ var server = net.createServer(function(socket) {
       const { type, payload } = parsedData;
       if (type === NAME_CHANGE) {
         handleNameChange(payload);
-      } else {
-        const strData = data.toString();
-        console.log(strData);
-        const player = getClientIndex(clients, socket);
-        console.log(`Player ${player}`);
-        broadcastData(
-          JSON.stringify({
-            payload: {
-              move: strData
-            },
-            type: START_GAME
-          }),
-          socket
-        );
+      }
+      if (type === GAME_MOVE) {
+        playerMovesArr.push(payload.move);
+        movesArr[payload.move] = "*";
+        resumeMainGame();
       }
     });
   }
@@ -111,7 +102,7 @@ function checkUserStatusAndStartGame() {
   if (clients.length === 2) {
     const checkNameChange = clients.filter(cli => cli.nameChanged === false);
     if (checkNameChange.length === 0) {
-      startMainGame();
+      resumeMainGame();
     }
     if (checkNameChange.length === 1) {
       let eligPlayer = clients[0].socket;
@@ -132,9 +123,9 @@ function checkUserStatusAndStartGame() {
   }
 }
 
-function startMainGame() {
-  console.log("Start the main game man");
+function resumeMainGame() {
   showGameBoardToPlayers();
+  askPlayersForMove();
 }
 
 function showGameBoardToPlayers() {
@@ -149,6 +140,39 @@ function showGameBoardToPlayers() {
       client.socket
     );
   });
+}
+
+function askPlayersForMove() {
+  const isMovesEven = playerMovesArr.length % 2;
+  let activePos = 1;
+  let passivePos = 2;
+  if (isMovesEven === 0) {
+    activePos = 2;
+    passivePos = 1;
+  }
+  /* Ask player move */
+  broadcastData(
+    JSON.stringify({
+      payload: {
+        ask: true,
+        oppPose: passivePos
+      },
+      type: GAME_MOVE
+    }),
+    clients[activePos - 1].socket
+  );
+
+  /* Ask player to wait */
+  broadcastData(
+    JSON.stringify({
+      payload: {
+        ask: false,
+        oppPose: activePos
+      },
+      type: GAME_MOVE
+    }),
+    clients[passivePos - 1].socket
+  );
 }
 
 function getClientIndex(clients, sock) {

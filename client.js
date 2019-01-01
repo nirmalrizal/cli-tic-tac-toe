@@ -7,6 +7,7 @@ const NAME_CHANGE = "NAME_CHANGE";
 const START_GAME = "START_GAME";
 const GAME_MESSAGE = "GAME_MESSAGE";
 const SHOW_GAME_BOARD = "SHOW_GAME_BOARD";
+const GAME_MOVE = "GAME_MOVE";
 
 const readMove = readline.createInterface({
   input: process.stdin,
@@ -35,6 +36,33 @@ client.connect(
   }
 );
 
+client.on("data", function(data) {
+  const parsedData = JSON.parse(data.toString());
+  const { type, payload } = parsedData;
+  if (type === START_GAME) {
+    gameFlow.name = `Player ${payload.player}`;
+    gameFlow.pos = payload.player;
+    chooseTheMove();
+  }
+  if (type === GAME_MESSAGE) {
+    if (payload.spinner === true) {
+      showMessageWithSpinner(payload.message);
+    } else {
+      console.log(`\n${payload.message}`);
+    }
+  }
+  if (type === SHOW_GAME_BOARD) {
+    showGameBoard(payload.board);
+  }
+  if (type === GAME_MOVE) {
+    if (payload.ask === true) {
+      chooseTheMove();
+    } else {
+      showMessageWithSpinner(`Waiting Player ${payload.oppPose} to move`);
+    }
+  }
+});
+
 function chooseTheMove() {
   const { steps, name } = gameFlow;
   if (!steps.askName) {
@@ -55,11 +83,19 @@ function handleTheMove(data) {
     console.log("Invalid move !!");
     chooseTheMove();
   } else {
-    client.write(data);
+    client.write(
+      JSON.stringify({
+        payload: {
+          move: gameIndex
+        },
+        type: GAME_MOVE
+      })
+    );
   }
 }
 
 function handleNameChange(playerName) {
+  gameFlow.steps.askName = true;
   if (playerName) {
     gameFlow.name = playerName;
   }
@@ -89,30 +125,6 @@ function stopTheSpinner() {
     cliSpinner.stop();
   }
 }
-
-client.on("data", function(data) {
-  const parsedData = JSON.parse(data.toString());
-  const { type, payload } = parsedData;
-  if (type === START_GAME) {
-    gameFlow.name = `Player ${payload.player}`;
-    gameFlow.pos = payload.player;
-    chooseTheMove();
-  }
-  if (type === GAME_MESSAGE) {
-    if (payload.spinner === true) {
-      showMessageWithSpinner(payload.message);
-    } else {
-      console.log(`\n${payload.message}`);
-    }
-  }
-  if (type === SHOW_GAME_BOARD) {
-    showGameBoard(payload.board);
-  }
-  if (type === "move") {
-    console.log(payload.move);
-    chooseTheMove();
-  }
-});
 
 function showGameBoard(gameBoard) {
   stopTheSpinner();
