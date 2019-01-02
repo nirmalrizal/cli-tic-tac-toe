@@ -23,8 +23,8 @@ const gameFlow = {
   }
 };
 
-let SERVER_ADDRESS = null;
-let SERVER_PORT = null;
+let SERVER_ADDRESS = "127.0.0.1";
+let SERVER_PORT = 1337;
 
 var client = new net.Socket();
 
@@ -36,9 +36,9 @@ function askForServerAddress() {
       const serverAddress = address.split(":");
       SERVER_ADDRESS = serverAddress[0];
       SERVER_PORT = serverAddress[1];
-      connecToTheServer();
     } else {
-      askForServerAddress();
+      connecToTheServer();
+      // askForServerAddress();
     }
   });
 }
