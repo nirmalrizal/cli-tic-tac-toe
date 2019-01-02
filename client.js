@@ -23,18 +23,35 @@ const gameFlow = {
   }
 };
 
-let SERVER_ADDRESS = "127.0.0.1";
-let SERVER_PORT = 1337;
+let SERVER_ADDRESS = null;
+let SERVER_PORT = null;
 
 var client = new net.Socket();
-client.connect(
-  SERVER_PORT,
-  SERVER_ADDRESS,
-  function() {
-    console.log("Connected");
-    // chooseTheMove();
-  }
-);
+
+askForServerAddress();
+
+function askForServerAddress() {
+  readMove.question(`\nEnter server address ( 127.0.0.1:1337 ) : `, address => {
+    if (address) {
+      const serverAddress = address.split(":");
+      SERVER_ADDRESS = serverAddress[0];
+      SERVER_PORT = serverAddress[1];
+      connecToTheServer();
+    } else {
+      askForServerAddress();
+    }
+  });
+}
+
+function connecToTheServer() {
+  client.connect(
+    SERVER_PORT,
+    SERVER_ADDRESS,
+    function() {
+      console.log("Connected");
+    }
+  );
+}
 
 client.on("data", function(data) {
   const parsedData = JSON.parse(data.toString());
@@ -140,4 +157,15 @@ function clearTheScreen() {
 
 client.on("close", function() {
   console.log("Connection closed");
+});
+
+client.on("error", function(err) {
+  console.log(
+    "\n************* Error on connecting to the server *************"
+  );
+  console.log(err);
+  console.log(
+    "************* Error on connecting to the server *************\n"
+  );
+  askForServerAddress();
 });
