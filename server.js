@@ -32,7 +32,7 @@ var server = net.createServer(function(socket) {
   if (clientsSize === 2) {
     socket.end("Maximum connections");
   } else {
-    console.log("new client connected");
+    // console.log("new client connected");
     const playerPos = clientsSize + 1;
     clients.push({
       name: `Player ${playerPos}`,
@@ -52,13 +52,13 @@ var server = net.createServer(function(socket) {
     );
 
     socket.on("end", function() {
-      console.log("Connection ended");
+      // console.log("Connection ended");
       const player = getClientIndex(clients, socket);
       clients.splice(player - 1, 1);
     });
 
     socket.on("error", function(error) {
-      console.log("Connection error");
+      // console.log("Connection error");
       const player = getClientIndex(clients, socket);
       clients.splice(player - 1, 1);
     });
@@ -82,7 +82,7 @@ function handleNameChange(data) {
   const { name, pos } = data;
   clients[pos - 1].name = name;
   clients[pos - 1].nameChanged = true;
-  console.log(`\nPlayer ${pos} changed name to : ${name}`);
+  // console.log(`\nPlayer ${pos} changed name to : ${name}`);
   checkUserStatusAndStartGame();
 }
 
@@ -181,4 +181,12 @@ function getClientIndex(clients, sock) {
 }
 
 const PORT = process.env.PORT || 1337;
-server.listen(PORT);
+server.listen(PORT, function() {
+  console.log(`
+    + ----------------------------------------- +
+    |                                           |
+    |       Server Address : 127.0.0.1:${PORT}     |
+    |                                           |
+    + ----------------------------------------- +
+  `);
+});
