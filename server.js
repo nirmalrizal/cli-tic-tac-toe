@@ -127,8 +127,15 @@ function checkUserStatusAndStartGame() {
 }
 
 function resumeMainGame() {
-  showGameBoardToPlayers();
-  askPlayersForMove();
+  console.log(playerMovesArr);
+  if (checkGameWin("*") === true) {
+    console.log("\n\nPlayer 1 won");
+  } else if (checkGameWin("#") === true) {
+    console.log("\n\nPlayer 2 won");
+  } else {
+    showGameBoardToPlayers();
+    askPlayersForMove();
+  }
 }
 
 function showGameBoardToPlayers() {
@@ -147,11 +154,11 @@ function showGameBoardToPlayers() {
 
 function askPlayersForMove() {
   const isMovesEven = playerMovesArr.length % 2;
-  let activePos = 1;
-  let passivePos = 2;
+  let activePos = 2;
+  let passivePos = 1;
   if (isMovesEven === 0) {
-    activePos = 2;
-    passivePos = 1;
+    activePos = 1;
+    passivePos = 2;
   }
   /* Ask player move */
   broadcastData(
@@ -176,6 +183,32 @@ function askPlayersForMove() {
     }),
     clients[passivePos - 1].socket
   );
+}
+
+const winningPosAList = [
+  [1, 2, 3],
+  [4, 5, 6],
+  [7, 8, 9],
+  [1, 4, 7],
+  [2, 5, 3],
+  [3, 6, 9],
+  [1, 5, 9],
+  [3, 5, 7]
+];
+
+function checkGameWin(symbol) {
+  const moves = { ...movesArr };
+  for (let i = 0; i < winningPosAList.length; i += 1) {
+    const win = winningPosAList[i];
+    if (
+      moves[win[0]] === symbol &&
+      moves[win[1]] === symbol &&
+      moves[win[2]] === symbol
+    ) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function getClientIndex(clients, sock) {
