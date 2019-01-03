@@ -33,8 +33,8 @@ function handleTheMove(data) {
   chooseTheMove();
 }
 
-printResult(movesArr);
-chooseTheMove();
+console.log(printResult(movesArr));
+// chooseTheMove();
 
 function clearTheScreen() {
   console.log(blank);
