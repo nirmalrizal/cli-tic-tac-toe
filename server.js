@@ -6,6 +6,7 @@ const START_GAME = "START_GAME";
 const GAME_MESSAGE = "GAME_MESSAGE";
 const SHOW_GAME_BOARD = "SHOW_GAME_BOARD";
 const GAME_MOVE = "GAME_MOVE";
+const GAME_DRAW = "GAME_DRAW";
 
 const movesArr = {
   "1": "1",
@@ -75,7 +76,7 @@ var server = net.createServer(function(socket) {
         } else {
           movesArr[payload.move] = "#";
         }
-        resumeMainGame();
+        showGameBoardToPlayers();
       }
     });
   }
@@ -105,7 +106,7 @@ function checkUserStatusAndStartGame() {
   if (clients.length === 2) {
     const checkNameChange = clients.filter(cli => cli.nameChanged === false);
     if (checkNameChange.length === 0) {
-      resumeMainGame();
+      showGameBoardToPlayers();
     }
     if (checkNameChange.length === 1) {
       let eligPlayer = clients[0].socket;
@@ -127,13 +128,13 @@ function checkUserStatusAndStartGame() {
 }
 
 function resumeMainGame() {
-  console.log(playerMovesArr);
   if (checkGameWin("*") === true) {
-    console.log("\n\nPlayer 1 won");
+    announceWinnerAndLoser(1, 2);
   } else if (checkGameWin("#") === true) {
-    console.log("\n\nPlayer 2 won");
+    announceWinnerAndLoser(2, 1);
+  } else if (checkGameWin(" ") === "draw") {
+    announceWinnerAndLoser(1, 2, true);
   } else {
-    showGameBoardToPlayers();
     askPlayersForMove();
   }
 }
@@ -150,6 +151,9 @@ function showGameBoardToPlayers() {
       client.socket
     );
   });
+  setTimeout(function() {
+    resumeMainGame();
+  }, 200);
 }
 
 function askPlayersForMove() {
@@ -185,6 +189,31 @@ function askPlayersForMove() {
   );
 }
 
+function announceWinnerAndLoser(winner, looser, draw) {
+  const winnerMessage = !draw ? "You won !!!" : "The game is draw";
+  const looserMessage = !draw ? "You lose the game !!!" : "The game is draw";
+  broadcastData(
+    JSON.stringify({
+      payload: {
+        message: winnerMessage,
+        spinner: false
+      },
+      type: GAME_MESSAGE
+    }),
+    clients[winner - 1].socket
+  );
+  broadcastData(
+    JSON.stringify({
+      payload: {
+        message: looserMessage,
+        spinner: false
+      },
+      type: GAME_MESSAGE
+    }),
+    clients[looser - 1].socket
+  );
+}
+
 const winningPosAList = [
   [1, 2, 3],
   [4, 5, 6],
@@ -207,6 +236,9 @@ function checkGameWin(symbol) {
     ) {
       return true;
     }
+  }
+  if (playerMovesArr.length === 9) {
+    return GAME_DRAW;
   }
   return false;
 }
