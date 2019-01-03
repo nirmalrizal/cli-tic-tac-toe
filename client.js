@@ -2,6 +2,8 @@ const net = require("net");
 const readline = require("readline");
 const ora = require("ora");
 
+const printResult = require("./printResult");
+
 /* Constants */
 const NAME_CHANGE = "NAME_CHANGE";
 const START_GAME = "START_GAME";
@@ -103,7 +105,8 @@ function handleTheMove(data) {
     client.write(
       JSON.stringify({
         payload: {
-          move: gameIndex
+          move: gameIndex,
+          pos: gameFlow.pos
         },
         type: GAME_MOVE
       })
@@ -146,7 +149,7 @@ function stopTheSpinner() {
 function showGameBoard(gameBoard) {
   stopTheSpinner();
   clearTheScreen();
-  console.log(gameBoard);
+  console.log(printResult(gameBoard));
 }
 
 function clearTheScreen() {

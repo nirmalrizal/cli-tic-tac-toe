@@ -1,5 +1,4 @@
 const net = require("net");
-const printResult = require("./printResult");
 
 /* Constants */
 const NAME_CHANGE = "NAME_CHANGE";
@@ -71,7 +70,11 @@ var server = net.createServer(function(socket) {
       }
       if (type === GAME_MOVE) {
         playerMovesArr.push(payload.move);
-        movesArr[payload.move] = "*";
+        if (payload.pos === 1) {
+          movesArr[payload.move] = "*";
+        } else {
+          movesArr[payload.move] = "#";
+        }
         resumeMainGame();
       }
     });
@@ -133,7 +136,7 @@ function showGameBoardToPlayers() {
     broadcastData(
       JSON.stringify({
         payload: {
-          board: printResult(movesArr)
+          board: movesArr
         },
         type: SHOW_GAME_BOARD
       }),
