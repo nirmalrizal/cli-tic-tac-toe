@@ -219,7 +219,7 @@ const winningPosAList = [
   [4, 5, 6],
   [7, 8, 9],
   [1, 4, 7],
-  [2, 5, 3],
+  [2, 5, 8],
   [3, 6, 9],
   [1, 5, 9],
   [3, 5, 7]
@@ -250,11 +250,13 @@ function getClientIndex(clients, sock) {
 
 const PORT = process.env.PORT || 1337;
 server.listen(PORT, function() {
-  console.log(`
+  require("dns").lookup(require("os").hostname(), function(err, add, fam) {
+    console.log(`
     + ----------------------------------------- +
-    |                                           |
-    |       Server Address : 127.0.0.1:${PORT}     |
-    |                                           |
+    |                                           
+    |    Server Address : ${add}:${PORT}     
+    |                                           
     + ----------------------------------------- +
   `);
+  });
 });

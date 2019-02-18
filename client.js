@@ -1,21 +1,21 @@
-const net = require('net');
-const readline = require('readline');
-const ora = require('ora');
+const net = require("net");
+const readline = require("readline");
+const ora = require("ora");
 
-const printResult = require('./printResult');
+const printResult = require("./printResult");
 
 /* Constants */
-const NAME_CHANGE = 'NAME_CHANGE';
-const START_GAME = 'START_GAME';
-const GAME_MESSAGE = 'GAME_MESSAGE';
-const SHOW_GAME_BOARD = 'SHOW_GAME_BOARD';
-const GAME_MOVE = 'GAME_MOVE';
+const NAME_CHANGE = "NAME_CHANGE";
+const START_GAME = "START_GAME";
+const GAME_MESSAGE = "GAME_MESSAGE";
+const SHOW_GAME_BOARD = "SHOW_GAME_BOARD";
+const GAME_MOVE = "GAME_MOVE";
 
 const readMove = readline.createInterface({
   input: process.stdin,
   output: process.stdout
 });
-const blank = '\n'.repeat(process.stdout.rows);
+const blank = "\n".repeat(process.stdout.rows);
 
 const gameFlow = {
   name: null,
@@ -25,7 +25,7 @@ const gameFlow = {
   }
 };
 
-let SERVER_ADDRESS = '127.0.0.1';
+let SERVER_ADDRESS = "127.0.0.1";
 let SERVER_PORT = 1337;
 
 var client = new net.Socket();
@@ -35,23 +35,23 @@ askForServerAddress();
 function askForServerAddress() {
   readMove.question(`\nEnter server address ( 127.0.0.1:1337 ) : `, address => {
     if (address) {
-      const serverAddress = address.split(':');
+      const serverAddress = address.split(":");
       SERVER_ADDRESS = serverAddress[0];
       SERVER_PORT = serverAddress[1];
     } else {
-      connecToTheServer();
       // askForServerAddress();
     }
+    connecToTheServer();
   });
 }
 
 function connecToTheServer() {
   client.connect(SERVER_PORT, SERVER_ADDRESS, function() {
-    console.log('Connected');
+    console.log("Connected");
   });
 }
 
-client.on('data', function(data) {
+client.on("data", function(data) {
   const parsedData = JSON.parse(data.toString());
   const { type, payload } = parsedData;
   if (type === START_GAME) {
@@ -95,7 +95,7 @@ function handleTheMove(data) {
   const gameIndex = Number(data);
   const isInValidIndex = gameIndex < 1 || gameIndex > 9;
   if (Number.isNaN(gameIndex) || isInValidIndex) {
-    console.log('Invalid move !!');
+    console.log("Invalid move !!");
     chooseTheMove();
   } else {
     client.write(
@@ -132,7 +132,7 @@ let cliSpinner;
 function showMessageWithSpinner(message) {
   cliSpinner = ora({
     text: message,
-    spinner: 'dots'
+    spinner: "dots"
   }).start();
 }
 
@@ -154,17 +154,17 @@ function clearTheScreen() {
   readline.clearScreenDown(process.stdout);
 }
 
-client.on('close', function() {
-  console.log('Connection closed');
+client.on("close", function() {
+  console.log("Connection closed");
 });
 
-client.on('error', function(err) {
+client.on("error", function(err) {
   console.log(
-    '\n************* Error on connecting to the server *************'
+    "\n************* Error on connecting to the server *************"
   );
   console.log(err);
   console.log(
-    '************* Error on connecting to the server *************\n'
+    "************* Error on connecting to the server *************\n"
   );
   askForServerAddress();
 });
