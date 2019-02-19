@@ -1,4 +1,5 @@
 const net = require("net");
+const path = require("path");
 
 /* Constants */
 const NAME_CHANGE = "NAME_CHANGE";
@@ -29,10 +30,10 @@ const broadcastData = function(data, client) {
 
 var server = net.createServer(function(socket) {
   const clientsSize = clients.length;
+
   if (clientsSize === 2) {
     socket.end("Maximum connections");
   } else {
-    // console.log("new client connected");
     const playerPos = clientsSize + 1;
     clients.push({
       name: `Player ${playerPos}`,
@@ -51,32 +52,43 @@ var server = net.createServer(function(socket) {
       socket
     );
 
-    socket.on("end", function() {
-      // console.log("Connection ended");
-      const player = getClientIndex(clients, socket);
-      clients.splice(player - 1, 1);
+    socket.on("end", function(data) {
+      try {
+        const player = getClientIndex(clients, socket);
+        clients.splice(player - 1, 1);
+      } catch (err) {
+        console.log("Error on end connection");
+      }
     });
 
     socket.on("error", function(error) {
-      // console.log("Connection error");
-      const player = getClientIndex(clients, socket);
-      clients.splice(player - 1, 1);
+      try {
+        const player = getClientIndex(clients, socket);
+        clients.splice(player - 1, 1);
+      } catch (err) {
+        console.log("Error on connection");
+      }
     });
 
     socket.on("data", function(data) {
-      const parsedData = JSON.parse(data.toString());
-      const { type, payload } = parsedData;
-      if (type === NAME_CHANGE) {
-        handleNameChange(payload);
-      }
-      if (type === GAME_MOVE) {
-        playerMovesArr.push(payload.move);
-        if (payload.pos === 1) {
-          movesArr[payload.move] = "*";
-        } else {
-          movesArr[payload.move] = "#";
+      try {
+        const parsedData = JSON.parse(data.toString());
+        const { type, payload } = parsedData;
+        if (type === NAME_CHANGE) {
+          handleNameChange(payload);
         }
-        showGameBoardToPlayers();
+        if (type === GAME_MOVE) {
+          playerMovesArr.push(payload.move);
+          if (payload.pos === 1) {
+            movesArr[payload.move] = "*";
+          } else {
+            movesArr[payload.move] = "#";
+          }
+          showGameBoardToPlayers();
+        }
+      } catch (e) {
+        console.log("Cannot handle data");
+        socket.end("Request from browser");
       }
     });
   }
@@ -86,7 +98,6 @@ function handleNameChange(data) {
   const { name, pos } = data;
   clients[pos - 1].name = name;
   clients[pos - 1].nameChanged = true;
-  // console.log(`\nPlayer ${pos} changed name to : ${name}`);
   checkUserStatusAndStartGame();
 }
 
@@ -249,7 +260,8 @@ function getClientIndex(clients, sock) {
 }
 
 const PORT = process.env.PORT || 1337;
-server.listen(PORT, function() {
+
+server.listen(PORT, function(err) {
   require("dns").lookup(require("os").hostname(), function(err, add, fam) {
     console.log(`
     + ----------------------------------------- +
